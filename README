@@ -1,0 +1,36 @@
+# keybridge — Mac → Windows keyboard, lowest possible latency
+
+## Setup
+
+**Windows (receiver)**
+```powershell
+python keybridge.py receive --secret CHANGE_ME
+```
+- Allow Python through the firewall for **UDP 47800** when it asks you (private network).
+- To type into admin windows (Task Manager, admin terminals), run it from an **elevated** prompt.
+  Windows never allows injected keys on the Ctrl+Alt+Del / UAC secure desktop.
+
+**macOS (sender)**
+```bash
+pip3 install pyobjc-framework-Quartz
+python3 keybridge.py send --host <WINDOWS_IP> --secret CHANGE_ME
+```
+- Give your terminal app **Accessibility** and **Input Monitoring** permission
+  (System Settings → Privacy & Security), then restart the terminal.
+- **Ctrl + Option + Cmd + K** turns forwarding on and off. When it's on, your Mac doesn't receive the keys.
+- `--cmd-as-ctrl`: Cmd+C/V/Z act as Ctrl+C/V/Z on Windows (Control becomes Win).
+  By default Cmd → Win, Option → Alt, Control → Ctrl.
+- `--iso` for European/ISO Mac keyboards.
+- On a MacBook keyboard, turn on "Use F1, F2, etc. keys as standard function keys" so the
+  F-keys get forwarded. The media/brightness top-row functions are not forwarded.
+
+## Measure your latency
+```bash
+python3 keybridge.py bench --host <WINDOWS_IP> --secret CHANGE_ME --inject-test
+```
+This writes `keybridge_report.md`. `--inject-test` types F24, which nothing uses, to time SendInput.
+
+## Getting the lowest ms
+1. **Ethernet on both machines.** Wi-Fi is the main source of latency, mostly from power-save spikes.
+2. Put both machines on the same switch or AP, and turn off any VPN.
+3. Keep `--redundancy 2` (the default). A lost packet then costs 0 ms instead of a stuck or missed key.
